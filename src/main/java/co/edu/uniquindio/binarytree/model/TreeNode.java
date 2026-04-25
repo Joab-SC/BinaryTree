@@ -5,14 +5,14 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class NodeTree<T> {
+public class TreeNode<T> {
 
-    private NodeTree<T> leftChild;
-    private NodeTree<T> rightChild;
-    private NodeTree<T> parent;
+    private TreeNode<T> leftChild;
+    private TreeNode<T> rightChild;
+    private TreeNode<T> parent;
     private T info;
 
-    public NodeTree(T info) {
+    public TreeNode(T info) {
         this.leftChild = null;
         this.rightChild = null;
         this.info = info;

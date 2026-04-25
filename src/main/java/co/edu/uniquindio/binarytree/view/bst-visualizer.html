@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BST Visualizer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:       #080b10;
+      --surface:  #0e1318;
+      --border:   #1c2330;
+      --accent:   #00d4ff;
+      --accent2:  #ff6b6b;
+      --accent3:  #ffd166;
+      --green:    #06d6a0;
+      --purple:   #a78bfa;
+      --text:     #cdd6e0;
+      --muted:    #4a5568;
+      --node-bg:  #111820;
+      --font-mono: 'Fira Code', monospace;
+      --font-display: 'Syne', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 12px var(--accent);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.4; transform:scale(0.6); }
+    }
+    .logo-title { font-family: var(--font-display); font-size: 17px; font-weight: 800; color: #fff; }
+    .logo-sub { color: var(--muted); font-size: 10px; }
+    .stats { display: flex; gap: 20px; }
+    .stat { text-align: center; }
+    .stat-val { color: var(--accent); font-size: 16px; font-weight: 700; }
+    .stat-val.green { color: var(--green); }
+    .stat-val.red   { color: var(--accent2); }
+    .stat-lbl { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; }
+
+    /* ── Layout ── */
+    .main { flex: 1; display: flex; min-height: 0; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 280px; background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0;
+      overflow-y: auto;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: #1c2330; border-radius: 2px; }
+
+    .section-label {
+      font-size: 9px; text-transform: uppercase; letter-spacing: .12em;
+      color: var(--muted); padding: 14px 18px 6px;
+    }
+
+    /* ── Controls ── */
+    .controls { padding: 0 14px 14px; border-bottom: 1px solid var(--border); }
+    .input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    input[type=number] {
+      flex: 1; background: #080b10; border: 1px solid var(--border);
+      border-radius: 7px; padding: 9px 12px; color: var(--text);
+      font-family: var(--font-mono); font-size: 12px;
+      transition: border-color .2s; -moz-appearance: textfield;
+    }
+    input[type=number]::-webkit-inner-spin-button { display: none; }
+    input[type=number]:focus { outline: none; border-color: var(--accent); }
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    button {
+      border: none; cursor: pointer; font-family: var(--font-mono);
+      font-size: 11px; font-weight: 600; border-radius: 7px;
+      padding: 9px 10px; transition: all .18s; letter-spacing: .02em;
+    }
+    button:active { transform: scale(0.95); }
+    .btn-insert { background: #051a10; color: var(--green);   border: 1px solid #0d3520; }
+    .btn-insert:hover { background: #0a2e1c; border-color: var(--green); }
+    .btn-delete { background: #1a0808; color: var(--accent2); border: 1px solid #3a1212; }
+    .btn-delete:hover { background: #2e1010; border-color: var(--accent2); }
+    .btn-demo   { background: #0d0f1a; color: var(--accent);  border: 1px solid #1a2030; }
+    .btn-demo:hover { border-color: var(--accent); }
+    .btn-clear  { background: #111318; color: var(--muted);   border: 1px solid var(--border); }
+    .btn-clear:hover { color: var(--text); border-color: var(--muted); }
+
+    /* ── Level search ── */
+    .level-row { display: flex; gap: 7px; padding: 0 14px 14px; border-bottom: 1px solid var(--border); }
+    .level-row input { flex:1; background:#080b10; border:1px solid var(--border); border-radius:7px; padding:9px 12px; color:var(--text); font-family:var(--font-mono); font-size:12px; -moz-appearance:textfield; }
+    .level-row input::-webkit-inner-spin-button { display:none; }
+    .level-row input:focus { outline:none; border-color:var(--purple); }
+    .btn-level { background:#12101a; color:var(--purple); border:1px solid #2a1f40; flex-shrink:0; }
+    .btn-level:hover { border-color:var(--purple); }
+    .level-result {
+      margin: 0 14px 10px;
+      background: #080b10; border: 1px solid var(--border);
+      border-radius: 7px; padding: 8px 12px;
+      font-size: 11px; color: var(--muted); min-height: 34px;
+      transition: all .3s;
+    }
+    .level-result.found { border-color: var(--purple); color: var(--purple); }
+    .level-result.not-found { border-color: var(--accent2); color: var(--accent2); }
+
+    /* ── Traversals ── */
+    .traversals { padding: 0 14px 14px; border-bottom: 1px solid var(--border); }
+    .trav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 8px; }
+    .btn-trav {
+      background: #0d0f1a; color: var(--accent3);
+      border: 1px solid #2a2010; font-size: 10px; padding: 8px 6px;
+    }
+    .btn-trav:hover { border-color: var(--accent3); }
+    .btn-trav.active { background: #1a1500; border-color: var(--accent3); }
+    .trav-result {
+      background: #080b10; border: 1px solid var(--border);
+      border-radius: 7px; padding: 10px 12px; font-size: 11px;
+      color: var(--muted); min-height: 40px; line-height: 1.8;
+      transition: all .3s;
+    }
+    .trav-result.active { border-color: var(--accent3); }
+    .trav-node {
+      display: inline-block; padding: 1px 7px; border-radius: 4px;
+      margin: 2px; font-size: 11px; font-weight: 600;
+      background: #1a1500; color: var(--accent3);
+      border: 1px solid #2a2010;
+      transition: all .15s;
+    }
+    .trav-node.lit {
+      background: var(--accent3); color: #000;
+      box-shadow: 0 0 10px var(--accent3);
+      transform: scale(1.15);
+    }
+
+    /* ── Step player ── */
+    .step-player { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+    .step-box {
+      background: #080b10; border: 1px solid var(--border);
+      border-radius: 7px; padding: 10px 12px; min-height: 50px;
+      font-size: 11px; line-height: 1.6; color: var(--text); transition: all .3s;
+    }
+    .step-box.highlight   { border-color: var(--accent3); color: var(--accent3); }
+    .step-box.insert-done { border-color: var(--green);   color: var(--green); }
+    .step-box.delete-done { border-color: var(--accent2); color: var(--accent2); }
+    .step-nav { display: flex; gap: 7px; margin-top: 7px; align-items: center; }
+    .step-nav button { padding: 5px 9px; font-size: 10px; background: #0d0f1a; color: var(--muted); border: 1px solid var(--border); }
+    .step-nav button:hover { color: var(--text); border-color: var(--muted); }
+    .step-nav button:disabled { opacity: .3; cursor: not-allowed; }
+    .step-counter { font-size: 10px; color: var(--muted); flex: 1; text-align: center; }
+
+    /* ── Log ── */
+    .log { flex:1; overflow-y:auto; padding:0 6px 10px; }
+    .log::-webkit-scrollbar { width:4px; }
+    .log::-webkit-scrollbar-thumb { background:#1c2330; border-radius:2px; }
+    .log-entry {
+      display:flex; gap:7px; padding:6px 9px; border-radius:5px;
+      font-size:10px; line-height:1.5; animation: slideIn .25s ease;
+    }
+    .log-entry:first-child { background:#ffffff06; }
+    @keyframes slideIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    .log-icon { font-size:11px; flex-shrink:0; margin-top:1px; }
+    .log-insert .log-icon { color:var(--green); }
+    .log-delete .log-icon { color:var(--accent2); }
+    .log-error  .log-icon { color:var(--accent2); }
+    .log-info   .log-icon { color:var(--accent); }
+    .log-trav   .log-icon { color:var(--accent3); }
+    .log-msg { color:var(--muted); }
+    .log-entry:first-child .log-msg { color:var(--text); }
+
+    /* ── Canvas ── */
+    .canvas {
+      flex:1; position:relative; overflow:auto; display:flex;
+      align-items:flex-start; justify-content:center; padding: 24px;
+      background:
+              radial-gradient(ellipse at 20% 20%, #00d4ff08 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 80%, #ff6b6b06 0%, transparent 60%),
+              var(--bg);
+    }
+    .empty-msg { color:var(--muted); font-size:13px; text-align:center; line-height:2; margin:auto; }
+    .empty-msg span { display:block; font-size:32px; margin-bottom:8px; opacity:.3; }
+    svg#tree-svg { overflow:visible; }
+
+    /* ── SVG ── */
+    .node-circle {
+      fill: var(--node-bg); stroke: var(--accent); stroke-width: 1.5;
+      transition: all .4s cubic-bezier(.34,1.56,.64,1);
+      filter: drop-shadow(0 0 6px #00d4ff30);
+    }
+    .node-circle.root-node  { stroke: var(--purple); filter: drop-shadow(0 0 8px #a78bfa50); }
+    .node-circle.highlighted { fill:#0d1a00; stroke:var(--accent3); filter:drop-shadow(0 0 14px var(--accent3)); stroke-width:2.5; }
+    .node-circle.new-node   { stroke:var(--green); filter:drop-shadow(0 0 14px var(--green)); animation:popIn .5s cubic-bezier(.34,1.56,.64,1); }
+    .node-circle.trav-lit   { fill:#1a1500; stroke:var(--accent3); filter:drop-shadow(0 0 12px var(--accent3)); stroke-width:2; }
+    @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+    .node-text {
+      fill:var(--text); font-family:var(--font-mono); font-size:13px; font-weight:600;
+      text-anchor:middle; dominant-baseline:middle; pointer-events:none; transition:fill .3s;
+    }
+    .node-text.highlighted { fill:var(--accent3); }
+    .node-text.trav-lit    { fill:var(--accent3); }
+    .tree-edge { stroke:var(--border); stroke-width:1.5; transition:all .4s ease; }
+    .tree-edge.highlighted { stroke:var(--accent3); stroke-width:2; opacity:.8; }
+    .edge-label { fill:var(--muted); font-family:var(--font-mono); font-size:9px; text-anchor:middle; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div>
+      <div class="logo-title">BST Visualizer</div>
+      <div class="logo-sub">Árbol Binario de Búsqueda</div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="stat-size">0</div><div class="stat-lbl">Nodos</div></div>
+    <div class="stat"><div class="stat-val" id="stat-height">—</div><div class="stat-lbl">Altura</div></div>
+    <div class="stat"><div class="stat-val" id="stat-root">—</div><div class="stat-lbl">Raíz</div></div>
+    <div class="stat"><div class="stat-val" id="stat-leaves">0</div><div class="stat-lbl">Hojas</div></div>
+    <div class="stat"><div class="stat-val green" id="stat-min">—</div><div class="stat-lbl">Mínimo</div></div>
+    <div class="stat"><div class="stat-val red"   id="stat-max">—</div><div class="stat-lbl">Máximo</div></div>
+  </div>
+</header>
+
+<div class="main">
+  <div class="sidebar">
+
+    <div class="section-label">Operaciones</div>
+    <div class="controls">
+      <div class="input-row">
+        <input type="number" id="val-input" placeholder="Valor..."/>
+      </div>
+      <div class="btn-grid">
+        <button class="btn-insert" onclick="doInsert()">＋ Insertar</button>
+        <button class="btn-delete" onclick="doDelete()">－ Eliminar</button>
+        <button class="btn-demo"   onclick="loadDemo()">◈ Demo</button>
+        <button class="btn-clear"  onclick="doClear()">✕ Limpiar</button>
+      </div>
+    </div>
+
+    <div class="section-label">Buscar Nivel de Nodo</div>
+    <div class="level-row">
+      <input type="number" id="level-input" placeholder="Nodo..."/>
+      <button class="btn-level" onclick="doGetLevel()">Nivel ▶</button>
+    </div>
+    <div class="level-result" id="level-result">Ingresa un valor para buscar su nivel</div>
+
+    <div class="section-label">Recorridos</div>
+    <div class="traversals">
+      <div class="trav-grid">
+        <button class="btn-trav" onclick="doTraversal('inorder')">In-Order</button>
+        <button class="btn-trav" onclick="doTraversal('preorder')">Pre-Order</button>
+        <button class="btn-trav" onclick="doTraversal('postorder')">Post-Order</button>
+        <button class="btn-trav" onclick="doTraversal('levelorder')">Amplitud</button>
+      </div>
+      <div class="trav-result" id="trav-result">Selecciona un recorrido para animarlo</div>
+    </div>
+
+    <div class="section-label">Paso a Paso</div>
+    <div class="step-player">
+      <div class="step-box" id="step-box">Agrega un valor para ver el recorrido...</div>
+      <div class="step-nav">
+        <button id="btn-prev" onclick="prevStep()" disabled>◀ Ant</button>
+        <span class="step-counter" id="step-counter">—</span>
+        <button id="btn-next" onclick="nextStep()" disabled>Sig ▶</button>
+      </div>
+    </div>
+
+    <div class="section-label">Registro</div>
+    <div class="log" id="log"></div>
+
+  </div>
+
+  <div class="canvas" id="canvas">
+    <div class="empty-msg" id="empty-msg">
+      <span>🌱</span>
+      El árbol está vacío<br/>Agrega valores o carga el Demo
+    </div>
+    <svg id="tree-svg" style="display:none"></svg>
+  </div>
+</div>
+
+<script>
+  const API = 'http://localhost:8080/api/tree';
+
+  let steps = [], stepIndex = -1, currentTree = null, newNodeVal = null;
+  let travAnimation = null;
+
+  async function apiFetch(path, method = 'GET', body = null) {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(API + path, opts);
+    return res.json();
+  }
+
+  // ── Operations ────────────────────────────────────────────────────────────
+  async function doInsert() {
+    const v = parseInt(document.getElementById('val-input').value);
+    if (isNaN(v)) { addLog('error', 'Ingresa un número válido'); return; }
+    try {
+      const data = await apiFetch('/insert', 'POST', { value: v });
+      if (data.error) { addLog('error', data.error); return; }
+      newNodeVal = v;
+      addLog('insert', `Insertando ${v}`);
+      loadSteps(data.steps, data.tree);
+      refreshStats();
+    } catch(e) { addLog('error', 'No se pudo conectar al backend'); }
+    document.getElementById('val-input').value = '';
+  }
+
+  async function doDelete() {
+    const v = parseInt(document.getElementById('val-input').value);
+    if (isNaN(v)) { addLog('error', 'Ingresa un número válido'); return; }
+    try {
+      const data = await apiFetch('/remove', 'DELETE', { value: v });
+      if (data.error) { addLog('error', data.error); return; }
+      newNodeVal = null;
+      addLog('delete', `Eliminando ${v}`);
+      loadSteps(data.steps, data.tree);
+      refreshStats();
+    } catch(e) { addLog('error', 'No se pudo conectar al backend'); }
+    document.getElementById('val-input').value = '';
+  }
+
+  async function doClear() {
+    try {
+      await apiFetch('/clear', 'DELETE');
+      currentTree = null; steps = []; stepIndex = -1;
+      renderTree(null, null, null);
+      updateStepUI();
+      addLog('info', 'Árbol limpiado');
+      refreshStats();
+      document.getElementById('trav-result').textContent = 'Selecciona un recorrido para animarlo';
+      document.getElementById('trav-result').className = 'trav-result';
+      document.getElementById('level-result').textContent = 'Ingresa un valor para buscar su nivel';
+      document.getElementById('level-result').className = 'level-result';
+    } catch(e) { addLog('error', 'No se pudo conectar al backend'); }
+  }
+
+  async function loadDemo() {
+    await doClear();
+    const vals = [50, 30, 70, 20, 40, 60, 80, 10, 35, 55];
+    for (const v of vals) {
+      try { await apiFetch('/insert', 'POST', { value: v }); } catch(e) {}
+    }
+    const data = await apiFetch('');
+    currentTree = data;
+    renderTree(data, null, null);
+    refreshStats();
+    addLog('info', `Demo cargado: ${vals.join(', ')}`);
+  }
+
+  async function refreshStats() {
+    try {
+      const s = await apiFetch('/stats');
+      document.getElementById('stat-size').textContent   = s.empty ? 0    : s.size;
+      document.getElementById('stat-height').textContent = s.empty ? '—'  : s.height;
+      document.getElementById('stat-leaves').textContent = s.empty ? 0    : s.leaves;
+      document.getElementById('stat-min').textContent    = s.empty ? '—'  : s.min;
+      document.getElementById('stat-max').textContent    = s.empty ? '—'  : s.max;
+      if (currentTree && currentTree.value !== undefined)
+        document.getElementById('stat-root').textContent = currentTree.value;
+      else
+        document.getElementById('stat-root').textContent = '—';
+    } catch(e) {}
+  }
+
+  // ── Level search ──────────────────────────────────────────────────────────
+  async function doGetLevel() {
+    const v = parseInt(document.getElementById('level-input').value);
+    if (isNaN(v)) { addLog('error', 'Ingresa un número válido'); return; }
+    const box = document.getElementById('level-result');
+    try {
+      const data = await apiFetch(`/level/${v}`);
+      if (data.error) {
+        box.textContent = `${v} no existe en el árbol`;
+        box.className = 'level-result not-found';
+      } else {
+        box.textContent = `Nodo ${v} → Nivel ${data.level} (la raíz es nivel 0)`;
+        box.className = 'level-result found';
+        renderTree(currentTree, v, null);
+      }
+    } catch(e) { addLog('error', 'No se pudo conectar al backend'); }
+  }
+
+  // ── Traversals ────────────────────────────────────────────────────────────
+  const travNames = {
+    inorder:    'In-Order (izq → raíz → der)',
+    preorder:   'Pre-Order (raíz → izq → der)',
+    postorder:  'Post-Order (izq → der → raíz)',
+    levelorder: 'Amplitud (nivel por nivel)'
+  };
+
+  async function doTraversal(type) {
+    if (travAnimation) { clearTimeout(travAnimation); travAnimation = null; }
+
+    document.querySelectorAll('.btn-trav').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+
+    try {
+      const data = await apiFetch(`/traversal/${type}`);
+      if (data.error) { addLog('error', data.error); return; }
+
+      const nodes = data.nodes;
+      addLog('trav', `${travNames[type]}: ${nodes.join(' → ')}`);
+
+      const box = document.getElementById('trav-result');
+      box.className = 'trav-result active';
+
+      // Render all nodes as chips first
+      box.innerHTML = nodes.map((n, i) =>
+              `<span class="trav-node" id="trav-n-${i}">${n}</span>`
+      ).join('');
+
+      // Animate one by one
+      animateTraversal(nodes, 0);
+
+    } catch(e) { addLog('error', 'No se pudo conectar al backend'); }
+  }
+
+  function animateTraversal(nodes, i) {
+    if (i >= nodes.length) {
+      renderTree(currentTree, null, null);
+      return;
+    }
+
+    // Highlight chip
+    document.querySelectorAll('.trav-node').forEach(el => el.classList.remove('lit'));
+    const chip = document.getElementById(`trav-n-${i}`);
+    if (chip) { chip.classList.add('lit'); chip.scrollIntoView({ block: 'nearest' }); }
+
+    // Highlight node in tree
+    renderTree(currentTree, nodes[i], null);
+
+    travAnimation = setTimeout(() => animateTraversal(nodes, i + 1), 600);
+  }
+
+  // ── Step system ───────────────────────────────────────────────────────────
+  function loadSteps(newSteps, finalTree) {
+    steps = newSteps; stepIndex = 0; currentTree = finalTree;
+    showStep(0);
+  }
+
+  function showStep(i) {
+    if (!steps.length) return;
+    const s = steps[i];
+    const box = document.getElementById('step-box');
+    box.textContent = s.message;
+    box.className = 'step-box';
+    if (s.action === 'inserted') box.classList.add('insert-done');
+    else if (s.action === 'removed') box.classList.add('delete-done');
+    else if (s.action === 'found')   box.classList.add('highlight');
+
+    const isLast = i === steps.length - 1;
+    renderTree(
+            s.treeSnapshot || currentTree,
+            s.highlightedNode,
+            isLast && s.action === 'inserted' ? newNodeVal : null
+    );
+    updateStepUI();
+  }
+
+  function nextStep() { if (stepIndex < steps.length - 1) { stepIndex++; showStep(stepIndex); } }
+  function prevStep() { if (stepIndex > 0) { stepIndex--; showStep(stepIndex); } }
+
+  function updateStepUI() {
+    const counter = document.getElementById('step-counter');
+    const prev = document.getElementById('btn-prev');
+    const next = document.getElementById('btn-next');
+    if (!steps.length) { counter.textContent = '—'; prev.disabled = next.disabled = true; return; }
+    counter.textContent = `${stepIndex + 1} / ${steps.length}`;
+    prev.disabled = stepIndex === 0;
+    next.disabled = stepIndex === steps.length - 1;
+  }
+
+  // ── Tree Rendering ─────────────────────────────────────────────────────────
+  const NODE_R = 26, H_GAP = 64, V_GAP = 76;
+
+  function layout(node, depth = 0, counter = { v: 0 }) {
+    if (!node) return null;
+    const left  = layout(node.left,  depth + 1, counter);
+    const x     = counter.v++;
+    const right = layout(node.right, depth + 1, counter);
+    return { ...node, x, y: depth, left, right };
+  }
+
+  function collectNodes(node, arr = []) {
+    if (!node) return arr;
+    arr.push(node); collectNodes(node.left, arr); collectNodes(node.right, arr);
+    return arr;
+  }
+
+  function collectEdges(node, arr = []) {
+    if (!node) return arr;
+    if (node.left)  { arr.push({ from: node, to: node.left,  side: 'L' }); collectEdges(node.left,  arr); }
+    if (node.right) { arr.push({ from: node, to: node.right, side: 'R' }); collectEdges(node.right, arr); }
+    return arr;
+  }
+
+  function renderTree(tree, highlighted, newNode) {
+    const svg = document.getElementById('tree-svg');
+    const emptyMsg = document.getElementById('empty-msg');
+
+    if (!tree || tree.value === undefined) {
+      svg.style.display = 'none'; emptyMsg.style.display = 'block'; return;
+    }
+    svg.style.display = 'block'; emptyMsg.style.display = 'none';
+
+    const laidOut = layout(tree);
+    const nodes   = collectNodes(laidOut);
+    const edges   = collectEdges(laidOut);
+
+    const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const W = (maxX - minX + 1) * H_GAP + NODE_R * 6;
+    const H = (maxY - minY + 1) * V_GAP + NODE_R * 6;
+
+    svg.setAttribute('width', W);
+    svg.setAttribute('height', H);
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+    const sx = n => (n.x - minX) * H_GAP + NODE_R * 3;
+    const sy = n => (n.y - minY) * V_GAP + NODE_R * 3;
+
+    let html = `<defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glow-strong"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>`;
+
+    edges.forEach(e => {
+      const isHl = highlighted !== null && highlighted !== undefined &&
+              (e.from.value === highlighted || e.to.value === highlighted);
+      const mx = (sx(e.from) + sx(e.to)) / 2;
+      const my = (sy(e.from) + sy(e.to)) / 2;
+      html += `<line class="tree-edge${isHl ? ' highlighted' : ''}" x1="${sx(e.from)}" y1="${sy(e.from)}" x2="${sx(e.to)}" y2="${sy(e.to)}"/>`;
+      html += `<text class="edge-label" x="${mx}" y="${my}">${e.side === 'L' ? 'izq' : 'der'}</text>`;
+    });
+
+    nodes.forEach(n => {
+      const isHl   = highlighted !== null && highlighted !== undefined && n.value === highlighted;
+      const isNew  = newNode !== null && newNode !== undefined && n.value === newNode;
+      const isRoot = n.value === laidOut.value;
+
+      let cls = 'node-circle';
+      if (isHl)        cls += ' highlighted';
+      else if (isNew)  cls += ' new-node';
+      else if (isRoot) cls += ' root-node';
+
+      const filter = isHl || isNew ? 'url(#glow-strong)' : 'url(#glow)';
+      const fontSize = n.value > 999 || n.value < -99 ? 10 : 13;
+
+      if (isHl) html += `<circle cx="${sx(n)}" cy="${sy(n)}" r="${NODE_R+10}" fill="none" stroke="#ffd16640" stroke-width="1.5" style="animation:pulseRing 1s ease-in-out infinite"/>`;
+      if (isRoot && !isHl) html += `<circle cx="${sx(n)}" cy="${sy(n)}" r="${NODE_R+5}" fill="none" stroke="#a78bfa" stroke-width="1" stroke-dasharray="3 3" opacity="0.4"/>`;
+
+      html += `<circle class="${cls}" cx="${sx(n)}" cy="${sy(n)}" r="${NODE_R}" filter="${filter}"/>`;
+      html += `<text class="node-text${isHl ? ' highlighted' : ''}" x="${sx(n)}" y="${sy(n)}" font-size="${fontSize}">${n.value}</text>`;
+    });
+
+    svg.innerHTML = html;
+  }
+
+  // ── Log ────────────────────────────────────────────────────────────────────
+  function addLog(type, msg) {
+    const icons = { insert:'＋', delete:'－', error:'✕', info:'◆', trav:'⟳' };
+    const log = document.getElementById('log');
+    const el  = document.createElement('div');
+    el.className = `log-entry log-${type}`;
+    el.innerHTML = `<span class="log-icon">${icons[type]||'·'}</span><span class="log-msg">${msg}</span>`;
+    log.prepend(el);
+    if (log.children.length > 50) log.removeChild(log.lastChild);
+  }
+
+  document.getElementById('val-input').addEventListener('keydown', e => { if (e.key === 'Enter') doInsert(); });
+  document.getElementById('level-input').addEventListener('keydown', e => { if (e.key === 'Enter') doGetLevel(); });
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  addLog('info', 'Conectando al backend en localhost:8080...');
+  apiFetch('').then(data => {
+    if (data && data.value !== undefined) {
+      currentTree = data; renderTree(data, null, null); refreshStats();
+      addLog('info', 'Árbol cargado desde el backend.');
+    } else {
+      addLog('info', 'Listo. El árbol está vacío.');
+    }
+  }).catch(() => {
+    addLog('error', 'Backend no disponible. Asegúrate de correr Spring Boot en :8080');
+  });
+</script>
+<style>
+  @keyframes pulseRing {
+    0%,100% { opacity:.3; transform:scale(1); }
+    50% { opacity:.8; transform:scale(1.2); }
+  }
+</style>
+</body>
+</html>
