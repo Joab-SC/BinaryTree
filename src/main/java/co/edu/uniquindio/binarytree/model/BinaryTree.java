@@ -3,9 +3,9 @@ package co.edu.uniquindio.binarytree.model;
 import lombok.Getter;
 import java.util.LinkedList;
 
+@Getter
 public class BinaryTree<T extends Comparable<T>> {
 
-    @Getter
     private TreeNode<T> root;
     private int size;
 
@@ -147,10 +147,6 @@ public class BinaryTree<T extends Comparable<T>> {
             if (node.getRightChild() != null) children.add(node.getRightChild());
         }
         printByLevel(children);
-    }
-
-    public int getSize() {
-        return size;
     }
 
     public int getHeight() {

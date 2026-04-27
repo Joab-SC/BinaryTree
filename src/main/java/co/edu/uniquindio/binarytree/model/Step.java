@@ -1,5 +1,8 @@
 package co.edu.uniquindio.binarytree.model;
 
+import lombok.Getter;
+
+@Getter
 public class Step<T extends Comparable<T>> {
 
     private String action;
@@ -14,8 +17,4 @@ public class Step<T extends Comparable<T>> {
         this.treeSnapshot = treeSnapshot;
     }
 
-    public String getAction() { return action; }
-    public Integer getHighlightedNode() { return highlightedNode; }
-    public String getMessage() { return message; }
-    public TreeNodeDTO<T> getTreeSnapshot() { return treeSnapshot; }
 }
